@@ -1,0 +1,180 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Intelligent Customer Support Ticket Triage Assistant
+
+Globals:
+  Function:
+    Runtime: python3.11
+    Timeout: 30
+    MemorySize: 256
+
+Resources:
+
+  TicketsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: tickets
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: ticketId
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: ticketId
+          KeyType: HASH
+
+
+  TicketQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ticket-queue
+
+
+  TicketAttachmentsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-attachments-${AWS::AccountId}"
+  
+  TicketApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ticket-api-function
+
+      CodeUri: backend/ticket-api/
+
+      Handler: app.lambda_handler
+
+      Environment:
+        Variables:
+          QUEUE_URL: !Ref TicketQueue
+          TABLE_NAME: !Ref TicketsTable
+
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt TicketQueue.QueueName
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TicketsTable
+
+      Events:
+        CreateTicket:
+          Type: Api
+          Properties:
+            Path: /tickets
+            Method: post
+
+        GetTicket:
+          Type: Api
+          Properties:
+            Path: /tickets/{ticketId}
+            Method: get
+
+        ListTickets:
+          Type: Api
+          Properties:
+            Path: /tickets
+            Method: get
+
+        UpdateTicket:
+          Type: Api
+          Properties:
+            Path: /tickets/{ticketId}
+            Method: put
+
+        DeleteTicket:
+          Type: Api
+          Properties:
+            Path: /tickets/{ticketId}
+            Method: delete
+
+  TicketProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ticket-processor-function
+
+      CodeUri: backend/ticket-processor/
+
+      Handler: app.lambda_handler
+
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TicketsTable
+
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TicketsTable
+
+      Events:
+        TicketQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TicketQueue.Arn
+            BatchSize: 10
+
+  AttachmentApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: attachment-api-function
+
+      CodeUri: backend/attachment-api/
+
+      Handler: app.lambda_handler
+
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref TicketAttachmentsBucket
+
+      Policies:
+        - S3CrudPolicy:
+            BucketName: !Ref TicketAttachmentsBucket
+
+      Events:
+        GenerateUploadUrl:
+          Type: Api
+          Properties:
+            Path: /tickets/{ticketId}/attachments/upload-url
+            Method: post
+
+  AttachmentProcessorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: attachment-processor-function
+
+      CodeUri: backend/attachment-processor/
+
+      Handler: app.lambda_handler
+
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref TicketsTable
+
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref TicketsTable
+
+      Events:
+        AttachmentUploaded:
+          Type: S3
+          Properties:
+            Bucket: !Ref TicketAttachmentsBucket
+            Events: s3:ObjectCreated:*
+
+Outputs:
+
+  QueueUrl:
+    Value: !Ref TicketQueue
+
+  TicketsTableName:
+    Value: !Ref TicketsTable
+
+  ApiUrl:
+    Description: API Gateway endpoint URL
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/tickets"
+
+  TicketProcessorFunction:
+    Value: !Ref TicketProcessorFunction
+
+  AttachmentsBucket:
+    Value: !Ref TicketAttachmentsBucket

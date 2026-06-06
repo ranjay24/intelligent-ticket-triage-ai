@@ -1,6 +1,13 @@
-__pycache__/
 .aws-sam/
-.env
+__pycache__/
 *.pyc
-.idea/
+
+.env
+.env.*
+
+.aws/
+
 .vscode/
+.idea/
+
+node_modules/
