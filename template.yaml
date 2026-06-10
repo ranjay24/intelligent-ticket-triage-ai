@@ -105,6 +105,12 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TicketsTable
+        
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: "*"
 
       Events:
         TicketQueueEvent:
