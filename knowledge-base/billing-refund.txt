@@ -1,0 +1,10 @@
+Billing Refund Policy
+
+Customers who are charged twice for a subscription are eligible for a refund.
+
+The support team should:
+1. Verify duplicate payment.
+2. Create refund request.
+3. Notify customer of refund status.
+
+Refund processing may take 5-7 business days.

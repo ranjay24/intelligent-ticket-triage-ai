@@ -3,11 +3,14 @@ import os
 import json
 from datetime import datetime
 
+from json_encoder import DecimalEncoder
+
 dynamodb = boto3.resource("dynamodb")
 
 table = dynamodb.Table(
     os.environ["TABLE_NAME"]
 )
+
 
 def update_ticket(ticket_id, body):
 
@@ -32,6 +35,7 @@ def update_ticket(ticket_id, body):
     return {
         "statusCode": 200,
         "body": json.dumps(
-            response["Attributes"]
+            response["Attributes"],
+            cls=DecimalEncoder
         )
     }

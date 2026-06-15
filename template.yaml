@@ -21,9 +21,22 @@ Resources:
         - AttributeName: ticketId
           AttributeType: S
 
+        - AttributeName: status
+          AttributeType: S
+
       KeySchema:
         - AttributeName: ticketId
           KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: status-index
+
+          KeySchema:
+            - AttributeName: status
+              KeyType: HASH
+
+          Projection:
+            ProjectionType: ALL
 
 
   TicketQueue:
@@ -89,6 +102,30 @@ Resources:
             Path: /tickets/{ticketId}
             Method: delete
 
+        PendingReviews:
+          Type: Api
+          Properties:
+            Path: /reviews/pending
+            Method: get
+
+        ApproveReview:
+          Type: Api
+          Properties:
+            Path: /reviews/{ticketId}/approve
+            Method: post
+
+        RejectReview:
+          Type: Api
+          Properties:
+            Path: /reviews/{ticketId}/reject
+            Method: post
+
+        Analytics:
+          Type: Api
+          Properties:
+            Path: /analytics
+            Method: get
+
   TicketProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -105,6 +142,15 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TicketsTable
+        - S3ReadPolicy:
+            BucketName: ticket-kb-479752407378
+            
+        - Statement:
+          - Effect: Allow
+            Action:
+              - ses:SendEmail
+              - ses:SendRawEmail
+            Resource: "*"
         
         - Statement:
             - Effect: Allow

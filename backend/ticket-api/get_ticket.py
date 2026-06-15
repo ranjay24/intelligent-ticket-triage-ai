@@ -2,11 +2,14 @@ import boto3
 import os
 import json
 
+from json_encoder import DecimalEncoder
+
 dynamodb = boto3.resource("dynamodb")
 
 TABLE_NAME = os.environ["TABLE_NAME"]
 
 table = dynamodb.Table(TABLE_NAME)
+
 
 def get_ticket(ticket_id):
 
@@ -28,5 +31,8 @@ def get_ticket(ticket_id):
 
     return {
         "statusCode": 200,
-        "body": json.dumps(item)
+        "body": json.dumps(
+            item,
+            cls=DecimalEncoder
+        )
     }

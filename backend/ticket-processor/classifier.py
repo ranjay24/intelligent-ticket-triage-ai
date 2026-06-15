@@ -28,7 +28,8 @@ Return exactly:
   "category": "",
   "priority": "",
   "sentiment": "",
-  "language": ""
+  "language": "",
+  "confidence": 0.0
 }}
 
 Categories:
@@ -37,6 +38,7 @@ Categories:
 - Technical Issue
 - Account Management
 - General Inquiry
+- Out Of Scope
 
 Priorities:
 - LOW
@@ -63,6 +65,14 @@ Rules:
 - Do not include markdown.
 - Do not wrap the JSON in ```json blocks.
 - Language must be one of the listed language values.
+- If the request is unrelated to software, customer accounts,
+  billing, authentication, subscriptions, applications,
+  websites, or platform support, classify as "Out Of Scope".
+- Confidence:
+- Between 0.0 and 1.0
+- Higher means more certain
+- If the ticket lacks enough information to determine
+  the category confidently, return confidence below 0.60.
 """
 
     response = bedrock.invoke_model(
@@ -110,5 +120,6 @@ Rules:
             "category": "General Inquiry",
             "priority": "LOW",
             "sentiment": "NEUTRAL",
-            "language": "English"
+            "language": "English",
+            "confidence": 0.0
         }

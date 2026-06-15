@@ -1,0 +1,8 @@
+Account Management Guide
+
+Customers can update:
+- Email address
+- Phone number
+- Contact preferences
+
+Identity verification may be required.
