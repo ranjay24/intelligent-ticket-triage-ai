@@ -1,0 +1,11 @@
+Out Of Scope Requests
+
+This support platform assists with:
+
+- Authentication
+- Billing
+- Technical Issues
+- Account Management
+- Product Support
+
+Requests unrelated to these services should be redirected to the appropriate service provider.

@@ -1,0 +1,8 @@
+{
+  "orderId": {
+    "S": "ORD1001"
+  },
+  "status": {
+    "S": "SHIPPED"
+  }
+}

@@ -1,8 +1,7 @@
 import boto3
 import os
-import json
 
-from json_encoder import DecimalEncoder
+from response import build_response
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -22,17 +21,15 @@ def get_ticket(ticket_id):
     item = response.get("Item")
 
     if not item:
-        return {
-            "statusCode": 404,
-            "body": json.dumps({
-                "message": "Ticket not found"
-            })
-        }
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(
-            item,
-            cls=DecimalEncoder
+        return build_response(
+            404,
+            {
+                "message": "Ticket not found"
+            }
         )
-    }
+
+    return build_response(
+        200,
+        item
+    )

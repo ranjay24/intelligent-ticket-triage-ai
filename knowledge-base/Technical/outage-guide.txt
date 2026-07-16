@@ -1,0 +1,10 @@
+Service Outage Response Guide
+
+When a service outage occurs:
+
+1. Verify outage status using monitoring systems.
+2. Check internal incident dashboards.
+3. Inform customers that the issue is being investigated.
+4. Provide estimated resolution times if available.
+
+Do not provide unofficial timelines.

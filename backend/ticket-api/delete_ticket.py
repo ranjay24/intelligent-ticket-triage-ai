@@ -1,12 +1,14 @@
 import boto3
 import os
-import json
+
+from response import build_response
 
 dynamodb = boto3.resource("dynamodb")
 
 table = dynamodb.Table(
     os.environ["TABLE_NAME"]
 )
+
 
 def delete_ticket(ticket_id):
 
@@ -16,9 +18,9 @@ def delete_ticket(ticket_id):
         }
     )
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps({
+    return build_response(
+        200,
+        {
             "message": "Ticket deleted successfully"
-        })
-    }
+        }
+    )

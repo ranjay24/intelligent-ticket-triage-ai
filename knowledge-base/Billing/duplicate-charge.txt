@@ -1,0 +1,10 @@
+Duplicate Charge Resolution
+
+If a customer reports being charged twice:
+
+1. Verify transaction history.
+2. Confirm duplicate payments.
+3. Create a refund request.
+4. Escalate for approval if required.
+
+Refunds for duplicate charges are prioritized as high-priority billing issues.

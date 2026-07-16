@@ -1,0 +1,11 @@
+Email Address Update Guide
+
+Customers may update their registered email address through account settings.
+
+Requirements:
+
+1. Verify account ownership.
+2. Provide access to current account.
+3. Confirm new email address.
+
+Changes may require email verification before activation.

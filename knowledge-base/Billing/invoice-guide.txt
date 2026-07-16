@@ -1,0 +1,11 @@
+Invoice Support Guide
+
+Customers may access invoices from the Billing section of their account.
+
+Invoices include:
+- Payment date
+- Transaction ID
+- Subscription details
+- Tax information
+
+Missing invoices may require support investigation.

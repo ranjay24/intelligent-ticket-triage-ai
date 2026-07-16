@@ -1,0 +1,12 @@
+Application Crash Troubleshooting
+
+If the application crashes:
+
+1. Restart the application.
+2. Update to the latest version.
+3. Clear local cache data.
+4. Reinstall the application if necessary.
+
+If crashes continue:
+- Collect logs.
+- Escalate to the technical support team.

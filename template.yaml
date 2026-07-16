@@ -8,8 +8,26 @@ Globals:
     Runtime: python3.11
     Timeout: 30
     MemorySize: 256
+    Layers:
+      - !Ref SharedLayer
+
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token,x-customer-email'"
+      AllowOrigin: "'*'"
 
 Resources:
+
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: triage-shared
+      Description: Shared code (observability, response, email_sender, tools)
+      ContentUri: layers/shared/
+      CompatibleRuntimes:
+        - python3.11
+      RetentionPolicy: Delete
 
   TicketsTable:
     Type: AWS::DynamoDB::Table
@@ -30,27 +48,73 @@ Resources:
 
       GlobalSecondaryIndexes:
         - IndexName: status-index
-
           KeySchema:
             - AttributeName: status
               KeyType: HASH
-
           Projection:
             ProjectionType: ALL
 
+  CustomersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: customers
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: customerId
+          AttributeType: S
+
+        - AttributeName: email
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: customerId
+          KeyType: HASH
+
+      GlobalSecondaryIndexes:
+        - IndexName: email-index
+          KeySchema:
+            - AttributeName: email
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+
+  OrdersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: orders
+      BillingMode: PAY_PER_REQUEST
+
+      AttributeDefinitions:
+        - AttributeName: orderId
+          AttributeType: S
+
+      KeySchema:
+        - AttributeName: orderId
+          KeyType: HASH
+
+  TicketDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: ticket-queue-dlq
+      MessageRetentionPeriod: 1209600  # keep failed messages 14 days
 
   TicketQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: ticket-queue
-
+      # After 3 failed processing attempts, park the message in the DLQ
+      # instead of retrying it forever.
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt TicketDLQ.Arn
+        maxReceiveCount: 3
 
   TicketAttachmentsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub "${AWS::StackName}-attachments-${AWS::AccountId}"
-  
+
   TicketApiFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -64,14 +128,39 @@ Resources:
         Variables:
           QUEUE_URL: !Ref TicketQueue
           TABLE_NAME: !Ref TicketsTable
+          CUSTOMERS_TABLE: !Ref CustomersTable
+          ORDERS_TABLE: !Ref OrdersTable
 
       Policies:
         - SQSSendMessagePolicy:
             QueueName: !GetAtt TicketQueue.QueueName
+
         - DynamoDBCrudPolicy:
             TableName: !Ref TicketsTable
 
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CustomersTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cloudwatch:PutMetricData
+              Resource: "*"
+
+        # Added: the approve flow (approve_ticket.py) sends the customer
+        # email from this function, so it needs SES send permission.
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
+
       Events:
+
         CreateTicket:
           Type: Api
           Properties:
@@ -88,6 +177,12 @@ Resources:
           Type: Api
           Properties:
             Path: /tickets
+            Method: get
+
+        MyTickets:
+          Type: Api
+          Properties:
+            Path: /my-tickets
             Method: get
 
         UpdateTicket:
@@ -138,24 +233,38 @@ Resources:
       Environment:
         Variables:
           TABLE_NAME: !Ref TicketsTable
+          ORDERS_TABLE: !Ref OrdersTable
 
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref TicketsTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref CustomersTable
+
+        - DynamoDBCrudPolicy:
+            TableName: !Ref OrdersTable
+
         - S3ReadPolicy:
             BucketName: ticket-kb-479752407378
-            
+
         - Statement:
-          - Effect: Allow
-            Action:
-              - ses:SendEmail
-              - ses:SendRawEmail
-            Resource: "*"
-        
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
+
         - Statement:
             - Effect: Allow
               Action:
                 - bedrock:InvokeModel
+              Resource: "*"
+
+        - Statement:
+            - Effect: Allow
+              Action:
+                - cloudwatch:PutMetricData
               Resource: "*"
 
       Events:
@@ -164,6 +273,10 @@ Resources:
           Properties:
             Queue: !GetAtt TicketQueue.Arn
             BatchSize: 10
+            # Let the function report only the messages that failed, so
+            # SQS redelivers just those (not the whole batch).
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
 
   AttachmentApiFunction:
     Type: AWS::Serverless::Function
@@ -189,6 +302,12 @@ Resources:
             Path: /tickets/{ticketId}/attachments/upload-url
             Method: post
 
+        GenerateDownloadUrl:
+          Type: Api
+          Properties:
+            Path: /tickets/{ticketId}/attachments/download-url
+            Method: get
+
   AttachmentProcessorFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -213,6 +332,264 @@ Resources:
             Bucket: !Ref TicketAttachmentsBucket
             Events: s3:ObjectCreated:*
 
+  TriageDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardName: TicketTriage
+      DashboardBody: !Sub |
+        {
+          "widgets": [
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Ticket flow",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "TicketTriageAI",
+                    "TicketsCreated"
+                  ],
+                  [
+                    ".",
+                    "TicketsProcessed"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Outcomes",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "TicketTriageAI",
+                    "TicketResolved"
+                  ],
+                  [
+                    ".",
+                    "PendingReview"
+                  ],
+                  [
+                    "TicketTriageAI",
+                    "TicketRejected"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Email delivery",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "TicketTriageAI",
+                    "EmailSent"
+                  ],
+                  [
+                    ".",
+                    "EmailFailed"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 8,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Errors",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "TicketTriageAI",
+                    "ApiError"
+                  ],
+                  [
+                    ".",
+                    "ProcessingError"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 16,
+              "y": 6,
+              "width": 8,
+              "height": 6,
+              "properties": {
+                "title": "Agent actions & privacy",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "TicketTriageAI",
+                    "OrderStatusChecked"
+                  ],
+                  [
+                    ".",
+                    "PasswordReset"
+                  ],
+                  [
+                    ".",
+                    "RefundIssued"
+                  ],
+                  [
+                    ".",
+                    "PiiRedactions"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Processing latency (p95)",
+                "region": "${AWS::Region}",
+                "stat": "p95",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "AWS/Lambda",
+                    "Duration",
+                    "FunctionName",
+                    "ticket-processor-function",
+                    {
+                      "stat": "p95"
+                    }
+                  ],
+                  [
+                    "...",
+                    "ticket-api-function",
+                    {
+                      "stat": "p95"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 12,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Lambda invocations & errors",
+                "region": "${AWS::Region}",
+                "stat": "Sum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "AWS/Lambda",
+                    "Invocations",
+                    "FunctionName",
+                    "ticket-processor-function"
+                  ],
+                  [
+                    "AWS/Lambda",
+                    "Errors",
+                    "FunctionName",
+                    "ticket-processor-function"
+                  ],
+                  [
+                    "AWS/Lambda",
+                    "Errors",
+                    "FunctionName",
+                    "ticket-api-function"
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 0,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Queue backlog",
+                "region": "${AWS::Region}",
+                "stat": "Maximum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "AWS/SQS",
+                    "ApproximateNumberOfMessagesVisible",
+                    "QueueName",
+                    "ticket-queue",
+                    {
+                      "stat": "Maximum"
+                    }
+                  ]
+                ]
+              }
+            },
+            {
+              "type": "metric",
+              "x": 12,
+              "y": 18,
+              "width": 12,
+              "height": 6,
+              "properties": {
+                "title": "Dead-letter queue (should stay 0)",
+                "region": "${AWS::Region}",
+                "stat": "Maximum",
+                "period": 300,
+                "view": "timeSeries",
+                "metrics": [
+                  [
+                    "AWS/SQS",
+                    "ApproximateNumberOfMessagesVisible",
+                    "QueueName",
+                    "ticket-queue-dlq",
+                    {
+                      "stat": "Maximum"
+                    }
+                  ]
+                ]
+              }
+            }
+          ]
+        }
+
 Outputs:
 
   QueueUrl:
@@ -220,6 +597,9 @@ Outputs:
 
   TicketsTableName:
     Value: !Ref TicketsTable
+
+  CustomersTableName:
+    Value: !Ref CustomersTable
 
   ApiUrl:
     Description: API Gateway endpoint URL
@@ -230,3 +610,7 @@ Outputs:
 
   AttachmentsBucket:
     Value: !Ref TicketAttachmentsBucket
+
+  TicketDLQUrl:
+    Description: Dead-letter queue for messages that failed processing
+    Value: !Ref TicketDLQ

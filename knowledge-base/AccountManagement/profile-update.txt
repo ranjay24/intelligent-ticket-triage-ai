@@ -1,0 +1,10 @@
+Profile Management Guide
+
+Customers can update:
+
+- Name
+- Contact details
+- Company information
+- Notification preferences
+
+Changes are typically applied immediately.

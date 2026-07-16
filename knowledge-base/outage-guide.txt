@@ -1,8 +1,0 @@
-Service Outage Procedure
-
-If customers report service outages:
-
-1. Verify outage status.
-2. Check monitoring dashboard.
-3. Inform customer that investigation is in progress.
-4. Do not provide ETA unless confirmed.

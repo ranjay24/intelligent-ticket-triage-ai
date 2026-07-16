@@ -1,0 +1,15 @@
+File Upload Error Resolution
+
+Common upload failures:
+
+1. Unsupported file format.
+2. File size exceeds limits.
+3. Network interruption.
+4. Temporary service issue.
+
+Recommended steps:
+
+- Verify file type.
+- Reduce file size if necessary.
+- Retry upload.
+- Check internet connectivity.

@@ -1,0 +1,79 @@
+<svg viewBox="0 0 940 720" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="0" y="0" width="940" height="720" fill="#ffffff"/>
+<text x="40" y="36" font-size="20" font-weight="700" fill="#0f172a">Intelligent Ticket Triage - AWS Architecture</text>
+<line x1="24" y1="520" x2="916" y2="520" stroke="#e2e8f0" stroke-width="1"/>
+<text x="40" y="536" font-size="11" font-weight="700" fill="#64748b">ATTACHMENTS</text>
+<line x1="24" y1="612" x2="916" y2="612" stroke="#e2e8f0" stroke-width="1"/>
+<text x="40" y="624" font-size="11" font-weight="700" fill="#64748b">OBSERVABILITY (all Lambdas)</text>
+<line x1="420" y1="78" x2="420" y2="116" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="330" y1="51" x2="220" y2="143" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="249" y="88" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="275" y="100" font-size="10" fill="#64748b" text-anchor="middle">auth</text>
+<line x1="420" y1="170" x2="420" y2="208" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="420" y1="262" x2="420" y2="300" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="394" y="272" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="420" y="284" font-size="10" fill="#64748b" text-anchor="middle">enqueue</text>
+<line x1="420" y1="354" x2="420" y2="392" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="394" y="364" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="420" y="376" font-size="10" fill="#64748b" text-anchor="middle">trigger</text>
+<line x1="510" y1="235" x2="700" y2="235" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="510" y1="419" x2="700" y2="235" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="510" y1="419" x2="700" y2="327" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="510" y1="419" x2="700" y2="399" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="510" y1="419" x2="700" y2="471" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="579" y="436" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="605" y="448" font-size="10" fill="#64748b" text-anchor="middle">email</text>
+<line x1="250" y1="567" x2="290" y2="567" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<line x1="460" y1="567" x2="500" y2="567" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="454" y="558" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="480" y="570" font-size="10" fill="#64748b" text-anchor="middle">event</text>
+<line x1="250" y1="655" x2="300" y2="655" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arw)"/>
+<rect x="249" y="646" width="52" height="16" rx="8" fill="#ffffff"/>
+<text x="275" y="658" font-size="10" fill="#64748b" text-anchor="middle">alarm</text>
+<rect x="330" y="24" width="180" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="420" y="46" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">React UI</text>
+<text x="420" y="63" font-size="10" fill="#64748b" text-anchor="middle">admin + customer</text>
+<rect x="330" y="116" width="180" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="420" y="138" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">API Gateway</text>
+<text x="420" y="155" font-size="10" fill="#64748b" text-anchor="middle">REST + CORS</text>
+<rect x="330" y="208" width="180" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="420" y="230" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">ticket-api Lambda</text>
+<text x="420" y="247" font-size="10" fill="#64748b" text-anchor="middle">CRUD / approve / reject</text>
+<rect x="330" y="300" width="180" height="54" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="420" y="322" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">SQS Queue</text>
+<text x="420" y="339" font-size="10" fill="#64748b" text-anchor="middle">ticket-queue</text>
+<rect x="330" y="392" width="180" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="420" y="414" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">ticket-processor</text>
+<text x="420" y="431" font-size="10" fill="#64748b" text-anchor="middle">classify / RAG / tools</text>
+<rect x="40" y="116" width="180" height="54" rx="10" fill="#fffbeb" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="130" y="138" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">Cognito</text>
+<text x="130" y="155" font-size="10" fill="#64748b" text-anchor="middle">auth (JWT, Admins)</text>
+<rect x="700" y="300" width="180" height="54" rx="10" fill="#ecfeff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="790" y="322" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">Amazon Bedrock</text>
+<text x="790" y="339" font-size="10" fill="#64748b" text-anchor="middle">Gemma - triage + draft</text>
+<rect x="700" y="372" width="180" height="54" rx="10" fill="#ecfeff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="790" y="394" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">S3 Knowledge Base</text>
+<text x="790" y="411" font-size="10" fill="#64748b" text-anchor="middle">RAG source docs</text>
+<rect x="700" y="208" width="180" height="54" rx="10" fill="#ecfdf5" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="790" y="230" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">DynamoDB</text>
+<text x="790" y="247" font-size="10" fill="#64748b" text-anchor="middle">tickets/customers/orders</text>
+<rect x="700" y="444" width="180" height="54" rx="10" fill="#ecfdf5" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="790" y="466" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">Amazon SES</text>
+<text x="790" y="483" font-size="10" fill="#64748b" text-anchor="middle">customer email</text>
+<rect x="40" y="540" width="210" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="145" y="562" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">attachment-api</text>
+<text x="145" y="579" font-size="10" fill="#64748b" text-anchor="middle">presigned URLs (via API GW)</text>
+<rect x="290" y="540" width="170" height="54" rx="10" fill="#ecfdf5" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="375" y="562" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">S3 Attachments</text>
+<text x="375" y="579" font-size="10" fill="#64748b" text-anchor="middle">uploaded files</text>
+<rect x="500" y="540" width="210" height="54" rx="10" fill="#eef2ff" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="605" y="562" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">attachment-processor</text>
+<text x="605" y="579" font-size="10" fill="#64748b" text-anchor="middle">S3 event -> tickets</text>
+<rect x="40" y="628" width="210" height="54" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="145" y="650" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">CloudWatch</text>
+<text x="145" y="667" font-size="10" fill="#64748b" text-anchor="middle">metrics / logs / alarm</text>
+<rect x="300" y="628" width="170" height="54" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.4"/>
+<text x="385" y="650" font-size="13" font-weight="600" fill="#1e293b" text-anchor="middle">SNS</text>
+<text x="385" y="667" font-size="10" fill="#64748b" text-anchor="middle">alerts</text>
+</svg>

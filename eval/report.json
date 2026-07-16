@@ -1,0 +1,13 @@
+{
+  "n": 50,
+  "category_accuracy": 0.9782608695652174,
+  "category_macro_f1": 0.9790849673202615,
+  "domain_accuracy": 1.0,
+  "tool_call_correctness": 0.9565217391304348,
+  "latency_p50": 1.520286599999963,
+  "latency_p95": 2.1362693000000945,
+  "avg_tokens_in": 450.3,
+  "avg_tokens_out": 120.0,
+  "est_cost_per_ticket": null,
+  "groundedness": null
+}

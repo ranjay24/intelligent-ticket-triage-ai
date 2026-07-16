@@ -1,0 +1,12 @@
+Multi-Factor Authentication Support
+
+If MFA codes are not working:
+
+1. Ensure device date and time are correct.
+2. Reopen the authenticator application.
+3. Verify the correct account is selected.
+4. Use backup recovery codes if available.
+
+If MFA access is permanently lost:
+- Contact support for identity verification.
+- Support may reset MFA enrollment after verification.

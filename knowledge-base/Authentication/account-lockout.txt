@@ -1,0 +1,13 @@
+Account Lockout Policy
+
+Accounts are automatically locked after five consecutive failed login attempts.
+
+Resolution Steps:
+
+1. Wait 15 minutes before retrying.
+2. Use the password reset process.
+3. Verify that the correct username is being used.
+
+Locked accounts are automatically unlocked after a successful password reset.
+
+Support agents may initiate an account recovery process if required.

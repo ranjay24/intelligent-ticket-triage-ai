@@ -1,7 +1,7 @@
 import boto3
 import os
-import json
-from decimal import Decimal
+
+from response import build_response
 
 dynamodb = boto3.resource("dynamodb")
 
@@ -10,85 +10,126 @@ table = dynamodb.Table(
 )
 
 
-def get_analytics():
+def _scan_all():
+    """Scan the whole table, following pagination.
+
+    A single scan() returns at most 1 MB of data; without following
+    LastEvaluatedKey, analytics silently ignore everything past the
+    first page once the table grows.
+    """
+    items = []
 
     response = table.scan()
+    items.extend(response.get("Items", []))
 
-    tickets = response["Items"]
+    while "LastEvaluatedKey" in response:
+        response = table.scan(
+            ExclusiveStartKey=response["LastEvaluatedKey"]
+        )
+        items.extend(response.get("Items", []))
+
+    return items
+
+
+def get_analytics():
+
+    tickets = _scan_all()
 
     analytics = {
-        "totalTickets": 0,
-        "newTickets": 0,
-        "pendingReview": 0,
-        "approved": 0,
-        "rejected": 0,
 
-        "authentication": 0,
-        "billing": 0,
-        "technicalIssue": 0,
-        "accountManagement": 0,
-        "generalInquiry": 0,
-        "outOfScope": 0,
+        "summary": {
 
-        "avgConfidence": 0
+            "totalTickets": 0,
+
+            "newTickets": 0,
+
+            "pendingReview": 0,
+
+            "resolved": 0,
+
+            "rejected": 0,
+
+            "closed": 0,
+
+            # Deprecated alias, kept == resolved so the existing
+            # frontend "Approved" card keeps working until it's
+            # relabelled to "Resolved".
+            "approved": 0,
+
+            "avgConfidence": 0
+
+        },
+
+        "categoryDistribution": {},
+
+        "priorityDistribution": {},
+
+        "recentTickets": []
+
     }
 
     confidence_sum = 0
     confidence_count = 0
 
+    tickets = sorted(
+        tickets,
+        key=lambda x: x.get("createdAt", ""),
+        reverse=True
+    )
+
+    analytics["recentTickets"] = tickets[:5]
+
     for ticket in tickets:
 
-        analytics["totalTickets"] += 1
+        analytics["summary"]["totalTickets"] += 1
 
         status = ticket.get("status")
 
         if status == "NEW":
-            analytics["newTickets"] += 1
+            analytics["summary"]["newTickets"] += 1
 
         elif status == "PENDING_REVIEW":
-            analytics["pendingReview"] += 1
+            analytics["summary"]["pendingReview"] += 1
 
-        elif status == "APPROVED":
-            analytics["approved"] += 1
+        # Fold legacy "APPROVED" rows into resolved so pre-migration
+        # tickets still show up correctly.
+        elif status in ("RESOLVED", "APPROVED"):
+            analytics["summary"]["resolved"] += 1
 
         elif status == "REJECTED":
-            analytics["rejected"] += 1
+            analytics["summary"]["rejected"] += 1
 
-        category = ticket.get("category")
+        elif status == "CLOSED":
+            analytics["summary"]["closed"] += 1
 
-        if category == "Authentication":
-            analytics["authentication"] += 1
+        category = ticket.get("category") or "Unknown"
 
-        elif category == "Billing":
-            analytics["billing"] += 1
+        analytics["categoryDistribution"][category] = (
+            analytics["categoryDistribution"].get(category, 0) + 1
+        )
 
-        elif category == "Technical Issue":
-            analytics["technicalIssue"] += 1
+        priority = ticket.get("priority") or "Unknown"
 
-        elif category == "Account Management":
-            analytics["accountManagement"] += 1
-
-        elif category == "General Inquiry":
-            analytics["generalInquiry"] += 1
-
-        elif category == "Out Of Scope":
-            analytics["outOfScope"] += 1
+        analytics["priorityDistribution"][priority] = (
+            analytics["priorityDistribution"].get(priority, 0) + 1
+        )
 
         confidence = ticket.get("confidence")
 
         if confidence is not None:
-
             confidence_sum += float(confidence)
             confidence_count += 1
 
-    if confidence_count > 0:
+    # Keep the deprecated alias in sync
+    analytics["summary"]["approved"] = analytics["summary"]["resolved"]
 
-        analytics["avgConfidence"] = round(
+    if confidence_count > 0:
+        analytics["summary"]["avgConfidence"] = round(
             confidence_sum / confidence_count,
             2
         )
 
-    return {
-        "statusCode": 200,
-        "body": json.dumps(analytics)
-    }
+    return build_response(
+        200,
+        analytics
+    )

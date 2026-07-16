@@ -1,0 +1,20 @@
+Login Frequently Asked Questions
+
+Common login issues and resolutions:
+
+1. Incorrect Username or Password
+   - Verify credentials carefully.
+   - Check for typing errors.
+
+2. Browser Problems
+   - Clear browser cache and cookies.
+   - Try an incognito/private browser session.
+
+3. Session Expired
+   - Sign out completely and log in again.
+
+4. Recent Password Change
+   - Wait a few minutes for synchronization.
+
+5. Unsupported Browser
+   - Use the latest version of Chrome, Firefox, Edge, or Safari.
