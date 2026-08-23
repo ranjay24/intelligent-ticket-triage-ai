@@ -5,7 +5,7 @@ Description: Intelligent Customer Support Ticket Triage Assistant
 
 Globals:
   Function:
-    Runtime python3.11
+    Runtime: python3.11
     Timeout: 30
     MemorySize: 256
     Layers:
